@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15
@@ -8,6 +6,8 @@ services:
       - POSTGRES_USER=lib_user
       - POSTGRES_PASSWORD=lib_password
     volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
       - "5432:5432"
 
   mailhog:
@@ -33,4 +33,4 @@ services:
       - DB_PORT=5432
 
 volumes:
-  postgress_data:
+  postgres_data:
