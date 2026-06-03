@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=library_db
+      - POSTGRES_USER=lib_user
+      - POSTGRES_PASSWORD=lib_password
+    volumes:
+      - "5432:5432"
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  web:
+    build: ./backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_NAME=library_db
+      - DB_USER=lib_user
+      - DB_PASSWORD=lib_password
+      - DB_HOST=db
+      - DB_PORT=5432
+
+volumes:
+  postgress_data:
