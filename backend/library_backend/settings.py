@@ -1,3 +1,5 @@
+import os
+
 """
 Django settings for library_backend project.
 
@@ -75,8 +77,12 @@ WSGI_APPLICATION = 'library_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'library_db'),
+        'USER': os.environ.get('DB_USER', 'lib_user'), # Тут має бути lib_user
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'lib_password'), # А тут lib_password
+        'HOST': os.environ.get('DB_HOST', 'db'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
