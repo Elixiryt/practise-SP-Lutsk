@@ -1,0 +1,28 @@
+#root {max-width: 1200px; margin: 0 auto; padding: 2rem; text-align: left;}
+
+.app-container { font-family: system-ui, sans-serif;}
+.app-container h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;}
+
+.status-message {font-size: 1.5rem; text-align: center; margin-top: 50px;}
+.error {color: #e74c3c;}
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, mimax(280, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.book-card {
+  background: #fdfdfd;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.book-card:hover {transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.1);}
+.book-card h2 {margin: 0 0 15 0; font-size: 1.2rem; color: #333;}
+.book-card p {margin: 5px 0; color: #666; font-size: 0.95rem;}
+.book-card .year {color: #3498db;}
