@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
-    'books'
+    'books',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -52,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'library_backend.urls'
@@ -82,8 +84,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'library_db'),
-        'USER': os.environ.get('DB_USER', 'lib_user'), # Тут має бути lib_user
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'lib_password'), # А тут lib_password
+        'USER': os.environ.get('DB_USER', 'lib_user'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'lib_password'),
         'HOST': os.environ.get('DB_HOST', 'db'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
@@ -111,7 +113,10 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     'DEFAULT AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentification.JWTAuthentifivation'
-    )
+    ),
+    
+    'DEFAULT_PLAGINATOIN_CLASS': 'rest_framework.plagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
 }
 
 from datetime import timedelta
@@ -143,3 +148,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ALLOW_ALL_ORIGIN = True
