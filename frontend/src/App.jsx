@@ -5,22 +5,29 @@ function App() {
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  
+  const [currentUrl, setCurrentUrl] = useState('http://localhost:8000/api/books/')
+  const [nextUrl, setNextUrl] = useState(null)
+  const [prevUrl, setPrevUrl] = useState(null)
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/books/')
+    setLoading(true)
+    fetch(currentUrl)
       .then(response => {
         if (!response.ok) throw new Error('Не вдалось завантажити дані з сервера')
         return response.json()
       })
       .then(data => {
         setBooks(data.results)
+        setNextUrl(data.next)
+        setPrevUrl(data.previous)
         setLoading(false)
       })
       .catch(err => {
         setError(err.message)
         setLoading(false)
       })
-  }, [])
+  }, [currentUrl])
 
   if (loading) return <div className="status-message">Завантаження книг</div>
   if (error) return <div className='status-message error'>Помилка: {error}</div>
@@ -37,6 +44,20 @@ function App() {
             <p className='year'><strong>Рік: </strong>{book.publication_year}</p>
           </div>
         ))}
+      </div>
+      <div className='pagination'>
+        <button
+          disabled = {!prevUrl}
+          onClick={() => setCurrentUrl(prevUrl)}
+        >
+          Попередня сторінка
+        </button>
+        <button
+          disabled = {!nextUrl}
+          onClick={() => setCurrentUrl(nextUrl)}
+        >
+          Наступна сторінка
+        </button>
       </div>
     </div>
 

@@ -26,3 +26,28 @@
 .book-card h2 {margin: 0 0 15 0; font-size: 1.2rem; color: #333;}
 .book-card p {margin: 5px 0; color: #666; font-size: 0.95rem;}
 .book-card .year {color: #3498db;}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 20;
+  margin-top: 40;
+  padding-bottom: 40;
+}
+
+.pagination button {
+  padding: 10px 20px;  
+  font-size: 1rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: backgtound-color 0.3s, transition 0.1s;
+  margin: 40px;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #2980b9;
+  transform: scale(1.05);
+}

@@ -1,7 +1,6 @@
 from rest_framework import generics, filters
 from .models import Book
 from .serializers import BookSerializer
-from .permissions import IsAdminOrReadOnly
 from rest_framework.permissions import AllowAny
 
 class BookListCreateView(generics.ListCreateAPIView):
@@ -16,4 +15,4 @@ class BookListCreateView(generics.ListCreateAPIView):
 class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [AllowAny]
