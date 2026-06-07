@@ -142,7 +142,7 @@ function App() {
                 />
                 <button type='submit'>Увійти</button>
               </form>
-              <button>Забули пароль</button>  
+              <button className='text-link' onClick={() => {setView('forgot'); setError(null)}}>Забули пароль</button>  
             </>
           )}
           
@@ -151,7 +151,7 @@ function App() {
               <h1>Відновлення паролю</h1>
               <p>Введіть вашу електронну пошту, і ми надішлемо вам код підтвердження.</p>
               <form onSubmit={handleForgotPassword} className='login-form'>
-                <input type='email' placeholder='Введіть вашу пошту' value={email} onClick={(e) => setEmail(e.target.value)} required/>
+                <input type='email' placeholder='Введіть вашу пошту' value={email} onChange={(e) => setEmail(e.target.value)} required/>
                 <button type='submit'>надіслати код</button>
               </form>
               <button className='text-link' onClick={() => {setView('login'); setError(null);}}>Повернутися до входу</button>
@@ -170,7 +170,7 @@ function App() {
               <button className='text-link' onClick={() => {setView('login'); setError(null);}}>Повернутись до входу</button>
             </>
           )}
-          
+
           {error && <p className='error'>{error}</p>}
         </div>
       </div>
