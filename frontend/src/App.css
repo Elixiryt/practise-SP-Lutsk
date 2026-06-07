@@ -110,3 +110,32 @@
 }
 
 .logout-btn:hover { background-color: #c0392b; }
+
+.text-link {
+  background: none;
+  border: none;
+  color: #3498db;
+  text-decoration: underline;
+  cursor: pointer;
+  size: 0.9rem;
+  margin-top: 15px;
+  padding: 0;
+}
+
+.text-link:hover {
+  color: #2980b9;
+  background: none;
+}
+
+.succes {
+  color: #27ae60;
+  font-weight: bold;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.login-box p {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 15px;
+}
