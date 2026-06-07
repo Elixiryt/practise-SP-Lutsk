@@ -5,6 +5,7 @@ function App() {
   const [view, setView] = useState('login')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [token, setToken] = useState(localStorage.getItem('access_token') || null)
 
   const [email, setEmail] = useState('')
@@ -80,6 +81,36 @@ function App() {
     }
   }
 
+  const handleRegistration = async (e) => {
+    e.preventDefault;
+    setError(null);
+    setMessage('')
+
+    if (password !== confirmPassword) {
+      setError('Паролі не збігаються!');
+      return;
+    }
+
+    try {
+      const response = await('http:/localhost:8000/api/register/', {
+        method: 'POST',
+        header: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username, email, password})
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.username ? 'Такий юзернейм вже існує' : 'Помилка реєстрації');
+      }
+
+      setMessage('Реєстрація успішна. Тепер ви можете увійти')
+      setView('login')
+      setPassword('')
+    } catch(err) {
+      setError(err.message)
+    }
+  }
+
   const handleLogout = () => {
     setToken(null);
     localStorage.removeItem('access_token'); // Краще повністю видаляти токен
@@ -143,6 +174,7 @@ function App() {
                 <button type='submit'>Увійти</button>
               </form>
               <button className='text-link' onClick={() => {setView('forgot'); setError(null)}}>Забули пароль</button>  
+              <button className='text-link' onClick={() => {setView('register'); setError(null)}}>Немає аккаунта. Зареєструйтесь</button>
             </>
           )}
           
@@ -168,6 +200,44 @@ function App() {
                 <button type='submit'>Змінити пароль</button>
               </form>
               <button className='text-link' onClick={() => {setView('login'); setError(null);}}>Повернутись до входу</button>
+            </>
+          )}
+
+          {view === 'register' && (
+            <>
+              <h1>Реєстрація</h1>
+              <form onSubmit={handleRegistration} className='login-form'>
+                <input
+                  type='text'
+                  placeholder='Введіть ваш юзернейм'
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+                <input
+                  type='email'
+                  placeholder='Введіть вашу пошту'
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <input
+                  type='password'
+                  placeholder='Введіть ваш пароль'
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <input
+                  type='password'
+                  placeholder='Повторіть пароль'
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+                <button type='submit'>Зареєструватись</button>
+              </form>
+              <button className='text-link' onClick={() => {setView('login'); setError(null)}}>Вже є аккаунт? Увійти</button>
             </>
           )}
 

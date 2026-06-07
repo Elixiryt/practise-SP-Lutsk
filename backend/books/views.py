@@ -1,7 +1,8 @@
 from rest_framework import generics, filters
 from .models import Book
-from .serializers import BookSerializer
-from rest_framework.permissions import IsAuthenticated
+from .serializers import BookSerializer, RegistrationSerializer
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contlib.auth.models import User
 
 class BookListCreateView(generics.ListCreateAPIView):
     queryset = Book.objects.all()
@@ -16,3 +17,8 @@ class BookDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticated]
+    
+class RegisterView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegistrationSerializer
+    permission_class = [AllowAny]
