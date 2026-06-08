@@ -45,7 +45,7 @@ function App() {
     setError(null);
     setMessage('');
     try {
-      const response = await fetch('http:/localhost:8000/password_reset/', {
+      const response = await fetch('http://localhost:8000/password_reset/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({email})
@@ -67,7 +67,7 @@ function App() {
     try {
       const respponse = await('http:/localhost:8000/password_reset/confirm/', {
         method: 'POST',
-        header: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ token:resetToken, password:newPassword})
       });
 
@@ -82,19 +82,25 @@ function App() {
   }
 
   const handleRegistration = async (e) => {
-    e.preventDefault;
+    e.preventDefault();
     setError(null);
     setMessage('')
 
+    console.log("Кнопка реєстрації натиснута")
+    console.log("дані для реєстрації:", {username, email, password, confirmPassword})
+
     if (password !== confirmPassword) {
+      console.log("Паролі не збігаються")
       setError('Паролі не збігаються!');
       return;
     }
 
+    console.log("Відправка fetch")
+
     try {
-      const response = await('http:/localhost:8000/api/register/', {
+      const response = await fetch('http://localhost:8000/api/register/', {
         method: 'POST',
-        header: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({username, email, password})
       });
 

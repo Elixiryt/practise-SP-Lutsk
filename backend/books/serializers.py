@@ -1,16 +1,16 @@
 from rest_framework import serializers
 from .models import Book
-from django.contlib.auth.models import User
+from django.contrib.auth.models import User
 
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
         fields = '__all__'
         
-class RegistrationSerializer(serializers.ModelSerilizer):
+class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = {'username', 'email', 'password'}
+        fields = ['username', 'email', 'password']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
