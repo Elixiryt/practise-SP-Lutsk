@@ -13,6 +13,7 @@ function App() {
   const [newPassword, setNewPassword] = useState('')
   const [message, setMessage] = useState('')
 
+  const [selectedBook, setSelectedBook] = useState(null)
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(false) // Початково краще false
   const [error, setError] = useState(null)
@@ -121,6 +122,26 @@ function App() {
     setToken(null);
     localStorage.removeItem('access_token'); // Краще повністю видаляти токен
     setBooks([]);
+  }
+
+  const handleViewDetails = async (bookId) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/books/${bookId}/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setSelectedBook(data);
+        setView('bookDetails');
+      } else {
+        setError('Невдалось завантажити деталі книги');
+      } 
+    } catch (err) {
+      setError('Помилка мережі');
+    }  
   }
 
   useEffect(() => {
@@ -246,14 +267,13 @@ function App() {
               <button className='text-link' onClick={() => {setView('login'); setError(null)}}>Вже є аккаунт? Увійти</button>
             </>
           )}
-
           {error && <p className='error'>{error}</p>}
         </div>
       </div>
     );
   }
 
-  return (
+return (
     <div className='app-container'>
       <div className='header-flex'>
         <h1>Моя бібліотека</h1>
@@ -266,20 +286,45 @@ function App() {
         <div className='status-message error'>Помилка: {error}</div>
       ) : (
         <>
-          <div className='books-grid'>
-            {books.map(book => (
-              <div key={book.id} className='book-card'>
-                <h2>{book.title}</h2>
-                <p><strong>Aвтор: </strong>{book.author}</p>
-                <p><strong>Жанр: </strong>{book.genre}</p>
-                <p className='year'><strong>Рік: </strong>{book.publication_year}</p>
+          {view === 'bookDetails' && selectedBook ? (
+            <div className="details-card">
+              <button onClick={() => setView('books')} className="back-btn">
+                ← Назад до списку
+              </button>
+              
+              <h2 className="details-title">{selectedBook.title}</h2>
+              <p className="details-author">Автор: {selectedBook.author}</p>
+              
+              <div className="details-meta">
+                <span className="meta-badge">{selectedBook.publication_year} рік</span>
+                <span className="meta-badge">{selectedBook.genre}</span>
               </div>
-            ))}
-          </div>
-          <div className='pagination'>
-            <button disabled={!prevUrl} onClick={() => setCurrentUrl(prevUrl)}>Попередня сторінка</button>
-            <button disabled={!nextUrl} onClick={() => setCurrentUrl(nextUrl)}>Наступна сторінка</button>
-          </div>
+            </div>
+          ) : (
+            <>
+              <div className='books-grid'>
+                {books.map(book => (
+                  <div key={book.id} className='book-card'>
+                    <h2>{book.title}</h2>
+                    <p><strong>Aвтор: </strong>{book.author}</p>
+                    <p><strong>Жанр: </strong>{book.genre}</p>
+                    <p className='year'><strong>Рік: </strong>{book.publication_year}</p>
+                    <button 
+                      onClick={() => handleViewDetails(book.id)} 
+                      className='detail-btn'
+                      style={{marginTop: '15px', padding: '8px 15px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}
+                    >
+                      Детальніше
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className='pagination'>
+                <button disabled={!prevUrl} onClick={() => setCurrentUrl(prevUrl)}>Попередня сторінка</button>
+                <button disabled={!nextUrl} onClick={() => setCurrentUrl(nextUrl)}>Наступна сторінка</button>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
