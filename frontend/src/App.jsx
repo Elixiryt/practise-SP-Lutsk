@@ -6,7 +6,9 @@ function App() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+
   const [token, setToken] = useState(localStorage.getItem('access_token') || null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const [newTitle, setNewTitle] = useState('')
   const [newAuthor, setNewAuthor] = useState('')
@@ -217,6 +219,24 @@ function App() {
       })
   }, [currentUrl, token]);
 
+  useEffect(() => {
+        if (!token) {
+      setIsAdmin(false);
+      return;
+    };
+
+    fetch('http://localhost:8000/api/me', {
+      headers: {'Authorization': `Bearer ${token}`}
+    })
+      .then(response => {
+        if (response.ok) return response.json();
+      })
+      .then(data => {
+        if (data) setIsAdmin(data.is_staff);
+      })
+      .catch(err => console.error('Не вдалося перевірити роль:', err));
+  }, [token]);
+
   if (loading && books.length === 0 && token) return <div className="status-message">Завантаження книг...</div>
   if (error && token) return <div className='status-message error'>Помилка: {error}</div>
 
@@ -322,7 +342,9 @@ return (
       <div className='header-flex'>
         <h1>Моя бібліотека</h1>
         <div>
-          <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn' style={{backgroundColor: '#2ecc71', marginRight: '10px'}}>+ Додати нову книгу</button>
+          {isAdmin && (
+            <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn' style={{backgroundColor: '#2ecc71', marginRight: '10px'}}>+ Додати нову книгу</button>
+          )}
           <button onClick={handleLogout} className='logout-btn'>Вийти з аккаунта</button>
         </div>
       </div>
@@ -352,9 +374,7 @@ return (
           /* 2. ІНАКШЕ ЯКЩО РЕЖИМ ДОДАВАННЯ КНИГИ */
           ) : view === 'addBook' ? (
             <div className="login-box" style={{ maxWidth: '500px' }}>
-              <button onClick={() => setView('books')} className="back-btn" style={{marginBottom: '15px'}}>
-                ← Назад до списку
-              </button>
+              <button onClick={() => setView('books')} className="back-btn" style={{marginBottom: '15px'}}>← Назад до списку</button>
               <h2>Додати нову книгу</h2>
               
               <form onSubmit={handleAddBook} className="login-form">
