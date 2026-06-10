@@ -41,6 +41,10 @@ function App() {
 
   const [isScraping, setIsScraping] = useState(false)
 
+  const [scrapeQuery, setScrapeQuery] = useState('Python');
+  const [scrapeCount, setScrapeCount] = useState(5); 
+  const [showScrapeMenu, setShowScrapeMenu] = useState(false);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -357,26 +361,30 @@ function App() {
     }
   }
 
-  const handleScrape = async () => {
-    if (!window.confirm('Запустити автоматичне збирання книг з books.toscrape.com? Це може зайняти кілька секунд.')) return;
-    
+const handleScrape = async (e) => {
+    e.preventDefault(); // Зупиняємо перезавантаження сторінки
     setIsScraping(true);
+    
     try {
       const response = await fetch('http://localhost:8000/api/scrape/', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json', // Обов'язково вказуємо, що шлемо JSON
           'Authorization': `Bearer ${token}`
-        }
+        },
+        body: JSON.stringify({
+          query: scrapeQuery,
+          count: scrapeCount
+        })
       });
       
       const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.error || 'Помилка при парсингу');
-      }
+      if (!response.ok) throw new Error(data.error || 'Помилка при парсингу');
       
       alert(data.message);
-      loadBooks(); // Одразу оновлюємо список, щоб побачити нові книги!
+      setShowScrapeMenu(false); // Ховаємо меню після успіху
+      loadBooks(); // Оновлюємо список
       
     } catch (err) {
       alert(`Помилка: ${err.message}`);
@@ -519,19 +527,28 @@ function App() {
 
 return (
     <div className='app-container'>
-      <div className='header-flex'>
+<div className='header-flex'>
         <h1>Моя бібліотека</h1>
         <div>
           {isAdmin && (
             <>
-              <button 
-                onClick={handleScrape} 
-                disabled={isScraping}
-                className='logout-btn' 
-                style={{backgroundColor: isScraping ? '#95a5a6' : '#8e44ad', marginRight: '10px'}}
-              >
-                {isScraping ? '⏳ Парсинг...' : '🤖 Спарсити книги'}
-              </button>
+              {/* 🔥 РОЗУМНИЙ ПАРСЕР (КНОПКА АБО ФОРМА) */}
+              {showScrapeMenu ? (
+                <form onSubmit={handleScrape} style={{display: 'inline-flex', gap: '5px', alignItems: 'center', marginRight: '10px'}}>
+                  <input type="text" value={scrapeQuery} onChange={e => setScrapeQuery(e.target.value)} placeholder="Тема (напр. Java)" style={{padding: '7px', width: '120px', borderRadius: '4px', border: '1px solid #ccc'}} required />
+                  <input type="number" value={scrapeCount} onChange={e => setScrapeCount(e.target.value)} placeholder="К-сть" style={{padding: '7px', width: '60px', borderRadius: '4px', border: '1px solid #ccc'}} required min="1" max="50"/>
+                  <button type="submit" disabled={isScraping} className='logout-btn' style={{backgroundColor: '#8e44ad', margin: 0}}>
+                    {isScraping ? '⏳...' : 'Запуск'}
+                  </button>
+                  <button type="button" onClick={() => setShowScrapeMenu(false)} className='logout-btn' style={{backgroundColor: '#95a5a6', margin: 0, padding: '8px 12px'}}>
+                    X
+                  </button>
+                </form>
+              ) : (
+                <button onClick={() => setShowScrapeMenu(true)} className='logout-btn' style={{backgroundColor: '#8e44ad', marginRight: '10px'}}>
+                  🤖 Розумний парсер
+                </button>
+              )}
 
               <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn' style={{backgroundColor: '#2ecc71', marginRight: '10px'}}>
                 + Додати нову книгу
@@ -539,9 +556,7 @@ return (
             </>
           )}
           
-          <button onClick={() => setView('profile')} className='logout-btn' style={{backgroundColor: '#3498db', marginRight: '10px'}}>
-            Мій профіль
-          </button>
+          <button onClick={() => setView('profile')} className='logout-btn' style={{backgroundColor: '#3498db', marginRight: '10px'}}>Мій профіль</button>
         </div>
       </div>
 

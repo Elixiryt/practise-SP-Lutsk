@@ -96,3 +96,47 @@ def scrape_books(request):
         
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def scrape_books(request):
+    # 1. Отримуємо параметри від React (що шукати і скільки)
+    search_query = request.data.get('query', 'programming')
+    count = int(request.data.get('count', 10))
+    
+    # 2. Робимо запит до реальної бази книг Open Library
+    url = f'https://openlibrary.org/search.json?q={search_query}&limit={count}'
+    
+    try:
+        response = requests.get(url)
+        data = response.json()
+        
+        books_added = 0
+        # 3. Перебираємо отримані книги
+        for doc in data.get('docs', []):
+            title = doc.get('title', 'Невідома назва')
+            
+            # Беремо першого автора зі списку (якщо є)
+            author_names = doc.get('author_name', ['Невідомий автор'])
+            author = author_names[0] if author_names else 'Невідомий автор'
+            
+            # Беремо рік першого видання
+            publish_year = doc.get('first_publish_year', 2024)
+            
+            # Жанр ставимо той, який шукав користувач
+            genre = search_query.capitalize()
+            
+            # 4. Зберігаємо в базу, якщо такої книги ще немає
+            if not Book.objects.filter(title=title).exists():
+                Book.objects.create(
+                    title=title[:200], # Захист від занадто довгих назв
+                    author=author[:150],
+                    genre=genre[:50],
+                    publication_year=publish_year
+                )
+                books_added += 1
+
+        return Response({'message': f'Магія спрацювала! Знайдено та збережено {books_added} реальних книг за запитом "{search_query}".'})
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
