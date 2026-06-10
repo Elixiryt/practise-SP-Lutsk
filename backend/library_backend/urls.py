@@ -20,7 +20,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from books.views import RegisterView, current_user, change_password, scrape_books
+from books.views import RegisterView, current_user, change_password, scrape_books, get_unique_genres
     
 urlpatterns = [
     path('admin/', admin.site.urls),

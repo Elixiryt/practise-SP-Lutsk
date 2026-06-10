@@ -29,6 +29,11 @@ function App() {
   const [nextUrl, setNextUrl] = useState(null)
   const [prevUrl, setPrevUrl] = useState(null)
 
+  const [suggestions, setSuggestions] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [genreSuggestions, setGenreSuggestions] = useState([]);
+  const [showGenreDropdown, setShowGenreDropdown] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('')
   const [filterGenre, setFilterGenre] = useState('')
   const [minYear, setMinYear] = useState('')
@@ -44,6 +49,19 @@ function App() {
   const [scrapeQuery, setScrapeQuery] = useState('Python');
   const [scrapeCount, setScrapeCount] = useState(5); 
   const [showScrapeMenu, setShowScrapeMenu] = useState(false);
+
+  const [scrapeSuggestions, setScrapeSuggestions] = useState([]);
+  const [showScrapeDropdown, setShowScrapeDropdown] = useState(false);
+  const OPEN_LIBRARY_SUBJECTS = [
+    "Python", "Linux", "Java", "JavaScript", "C++", "PHP",
+    "Programming", "Computer Science", "Artificial Intelligence",
+    "Science Fiction", "Fantasy", "Mystery", "Romance", "Horror",
+    "History", "Psychology", "Business", "Art", "Cooking"
+  ];
+
+  const availableScrapeGenres = OPEN_LIBRARY_SUBJECTS.filter(g => 
+    g.toLowerCase().includes(scrapeQuery.toLowerCase())
+  );
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -320,7 +338,7 @@ function App() {
     setCurrentUrl(`http://localhost:8000/api/books/?${params.toString()}`);
   }
 
-  const handleResetFilters = () => {
+  const handleResetFilters = (e) => {
     e.preventDefault();
 
     setSearchQuery('')
@@ -424,6 +442,73 @@ const handleScrape = async (e) => {
         setUserProfile({ username: 'Помилка', email: 'Помилка', is_staff: false }); 
       });
   }, [token]);
+
+  // 🔥 ЛОГІКА ЖИВОГО ПОШУКУ (Спадне меню)
+  useEffect(() => {
+    // Якщо введено менше 2 символів, ховаємо меню і нічого не шукаємо
+    if (searchQuery.trim().length < 2) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    // Функція, яка тихо підтягує підказки з бекенду
+    const fetchSuggestions = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/api/books/?search=${searchQuery}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Беремо тільки перші 5 результатів для підказки
+          setSuggestions(data.results.slice(0, 5)); 
+          setShowDropdown(true);
+        }
+      } catch (err) {
+        console.error("Помилка живого пошуку:", err);
+      }
+    };
+
+    // Запускаємо пошук через 300 мілісекунд після того, як юзер перестав друкувати
+    const timeoutId = setTimeout(() => {
+      fetchSuggestions();
+    }, 300);
+
+    // Якщо юзер натиснув нову клавішу до того як пройшло 300мс - скидаємо старий таймер
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, token]);
+
+  // 🔥 ЛОГІКА ПІДКАЗОК ДЛЯ ЖАНРІВ
+  // 🔥 ОНОВЛЕНА ЛОГІКА ПІДКАЗОК ДЛЯ ЖАНРІВ (показує одразу)
+  useEffect(() => {
+    const fetchGenreSuggestions = async () => {
+      try {
+        // Якщо юзер щось ввів - шукаємо по буквах. Якщо ні - просто беремо останні книги
+        const url = filterGenre.trim() 
+          ? `http://localhost:8000/api/books/?genre__icontains=${filterGenre}`
+          : `http://localhost:8000/api/books/`;
+          
+        const response = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Витягуємо унікальні жанри (і відкидаємо порожні)
+          const uniqueGenres = [...new Set(data.results.map(book => book.genre).filter(Boolean))];
+          setGenreSuggestions(uniqueGenres.slice(0, 5)); 
+        }
+      } catch (err) {
+        console.error("Помилка пошуку жанрів:", err);
+      }
+    };
+
+    // Якщо ми тільки клікнули на поле (воно порожнє) - вантажимо одразу, інакше чекаємо 300мс
+    const delay = filterGenre.trim() ? 300 : 0;
+    const timeoutId = setTimeout(() => fetchGenreSuggestions(), delay);
+    
+    return () => clearTimeout(timeoutId);
+  }, [filterGenre, token]);
 
   if (loading && books.length === 0 && token) return <div className="status-message">Завантаження книг...</div>
   if (error && token) return <div className='status-message error'>Помилка: {error}</div>
@@ -533,9 +618,44 @@ return (
           {isAdmin && (
             <>
               {/* 🔥 РОЗУМНИЙ ПАРСЕР (КНОПКА АБО ФОРМА) */}
+              {/* 🔥 РОЗУМНИЙ ПАРСЕР ЗІ СПАДНИМ МЕНЮ ЖАНРІВ */}
               {showScrapeMenu ? (
                 <form onSubmit={handleScrape} style={{display: 'inline-flex', gap: '5px', alignItems: 'center', marginRight: '10px'}}>
-                  <input type="text" value={scrapeQuery} onChange={e => setScrapeQuery(e.target.value)} placeholder="Тема (напр. Java)" style={{padding: '7px', width: '120px', borderRadius: '4px', border: '1px solid #ccc'}} required />
+                  
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type="text" 
+                      value={scrapeQuery} 
+                      onChange={e => setScrapeQuery(e.target.value)} 
+                      onBlur={() => setTimeout(() => setShowScrapeDropdown(false), 200)}
+                      onFocus={() => setShowScrapeDropdown(true)} // Показуємо всі одразу при кліку
+                      placeholder="Тема (напр. Python)" 
+                      style={{padding: '7px', width: '130px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box'}} 
+                      required 
+                    />
+                    
+                    {showScrapeDropdown && availableScrapeGenres.length > 0 && (
+                      <ul style={{
+                        position: 'absolute', top: '100%', left: 0, right: 0,
+                        background: 'white', border: '1px solid #ccc', borderRadius: '5px',
+                        listStyle: 'none', padding: 0, margin: '5px 0 0 0',
+                        boxShadow: '0 5px 15px rgba(0,0,0,0.1)', zIndex: 1000, overflow: 'hidden', maxHeight: '200px', overflowY: 'auto'
+                      }}>
+                        {availableScrapeGenres.map((genre, index) => (
+                          <li 
+                            key={index}
+                            onClick={() => { setScrapeQuery(genre); setShowScrapeDropdown(false); }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#f1f2f6'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                            style={{ padding: '8px 10px', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '14px' }}
+                          >
+                            <strong style={{color: '#2c3e50'}}>{genre}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
                   <input type="number" value={scrapeCount} onChange={e => setScrapeCount(e.target.value)} placeholder="К-сть" style={{padding: '7px', width: '60px', borderRadius: '4px', border: '1px solid #ccc'}} required min="1" max="50"/>
                   <button type="submit" disabled={isScraping} className='logout-btn' style={{backgroundColor: '#8e44ad', margin: 0}}>
                     {isScraping ? '⏳...' : 'Запуск'}
@@ -700,10 +820,82 @@ return (
             <>
               <div className='filter-panel'>
                 <form onSubmit={handleSearch} className='filter-form'>
-                  <input type='text' placeholder='Пошук за назвою чи автором...' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className='filter-input large'/>
-                  <input type='text' placeholder='Жанр...' value={filterGenre} onChange={(e) => setFilterGenre(e.target.value)} className='filter-input small'/>
+                  <div style={{ position: 'relative', flex: '1', minWidth: '200px' }}>
+                    <input 
+                      type='text' 
+                      placeholder='Пошук за назвою чи автором...' 
+                      value={searchQuery} 
+                      onChange={(e) => setSearchQuery(e.target.value)} 
+                      onBlur={() => setTimeout(() => setShowDropdown(false), 200)} 
+                      onFocus={() => { if (suggestions && suggestions.length > 0) setShowDropdown(true) }} 
+                      className='filter-input large'
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    />
+                    {showDropdown && suggestions && suggestions.length > 0 && (
+                      <ul style={{
+                        position: 'absolute', top: '100%', left: 0, right: 0,
+                        background: 'white', border: '1px solid #ccc', borderRadius: '5px',
+                        listStyle: 'none', padding: 0, margin: '5px 0 0 0',
+                        boxShadow: '0 5px 15px rgba(0,0,0,0.1)', zIndex: 1000, overflow: 'hidden'
+                      }}>
+                        {suggestions.map(book => (
+                          <li 
+                            key={book.id}
+                            onClick={() => {
+                              setSearchQuery(book.title); 
+                              setShowDropdown(false);     
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#f1f2f6'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                            style={{ padding: '10px 15px', cursor: 'pointer', borderBottom: '1px solid #eee', transition: 'background 0.2s' }}
+                          >
+                            <strong style={{color: '#2c3e50'}}>{book.title}</strong> 
+                            <span style={{color: '#7f8c8d', fontSize: '0.9em', marginLeft: '5px'}}>— {book.author}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  <div style={{ position: 'relative', width: '150px' }}>
+                    <input 
+                      type='text' 
+                      placeholder='Жанр...' 
+                      value={filterGenre} 
+                      onChange={(e) => setFilterGenre(e.target.value)} 
+                      onBlur={() => setTimeout(() => setShowGenreDropdown(false), 200)} 
+                      onFocus={() => setShowGenreDropdown(true)} // 🔥 ЗМІНА: Відкриваємо одразу при кліку
+                      className='filter-input small'
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    />
+                    
+                    {showGenreDropdown && genreSuggestions && genreSuggestions.length > 0 && (
+                      <ul style={{
+                        position: 'absolute', top: '100%', left: 0, right: 0,
+                        background: 'white', border: '1px solid #ccc', borderRadius: '5px',
+                        listStyle: 'none', padding: 0, margin: '5px 0 0 0',
+                        boxShadow: '0 5px 15px rgba(0,0,0,0.1)', zIndex: 1000, overflow: 'hidden'
+                      }}>
+                        {genreSuggestions.map((genre, index) => (
+                          <li 
+                            key={index}
+                            onClick={() => {
+                              setFilterGenre(genre); 
+                              setShowGenreDropdown(false);     
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#f1f2f6'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                            style={{ padding: '10px 15px', cursor: 'pointer', borderBottom: '1px solid #eee', transition: 'background 0.2s' }}
+                          >
+                            <strong style={{color: '#2c3e50'}}>{genre}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                   <input type='number' placeholder='Рік від' value={minYear} onChange={(e) => setMinYear(e.target.value)} className='filter-input small'/>
                   <input type='number' placeholder='Рік до' value={maxYear} onChange={(e) => setMaxYear(e.target.value)} className='filter-input small'/>
+                  
                   <button type='submit' className='filter-btn primary'>Шукати</button>
                   <button type='button' onClick={handleResetFilters} className='filter-btn secondary'>Скинути</button>
                 </form>
