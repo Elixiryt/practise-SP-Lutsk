@@ -190,6 +190,33 @@ function App() {
     }
   }
 
+  const handleDeleteBook = async (bookId) => {
+    if (!window.confirm('Ви впевнені що хочете видалити цю книгу назавжди?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/books/${bookId}/`, {
+        method: 'DELETE',
+        headers: {'Authorization': `Bearer ${token}`}
+      });
+
+      if (response.status === 403) {
+        throw new Error('У вас немає прав адміністратора для видалення книг!');
+      }
+      if (!response.ok && response.status !== 204) {
+        throw new Error('Помилка при видаленні книги.')
+      }
+
+      alert('Книга видалена успішно');
+
+      setView('books')
+      setCurrentUrl('http://localhost:8000/api/books')
+    } catch(err) {
+      setError(err.message);
+    }
+  }
+
   useEffect(() => {
     if (!token) return;
 
@@ -358,9 +385,10 @@ return (
           {/* 1. ЯКЩО РЕЖИМ ПЕРЕГЛЯДУ ДЕТАЛЕЙ */}
           {view === 'bookDetails' && selectedBook ? (
             <div className="details-card">
-              <button onClick={() => setView('books')} className="back-btn">
-                ← Назад до списку
-              </button>
+              <button onClick={() => setView('books')} className="back-btn"> ← Назад до списку</button>
+              {isAdmin && (
+                <button onClick={() => handleDeleteBook(selectedBook.id)} className='detail-btn' style={{backgroundColor: '#e74c3c'}}>Видалити книгу</button>
+              )}
               
               <h2 className="details-title">{selectedBook.title}</h2>
               <p className="details-author">Автор: {selectedBook.author}</p>
@@ -392,17 +420,16 @@ return (
               <div className='books-grid'>
                 {books.map(book => (
                   <div key={book.id} className='book-card'>
-                    <h2>{book.title}</h2>
-                    <p><strong>Aвтор: </strong>{book.author}</p>
-                    <p><strong>Жанр: </strong>{book.genre}</p>
-                    <p className='year'><strong>Рік: </strong>{book.publication_year}</p>
-                    <button 
-                      onClick={() => handleViewDetails(book.id)} 
-                      className='detail-btn'
-                      style={{marginTop: '15px', padding: '8px 15px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}
-                    >
-                      Детальніше
-                    </button>
+                    <div className='book-info'>
+                      <h2>{book.title}</h2>
+                      <p><strong>Aвтор: </strong>{book.author}</p>
+                      <p><strong>Жанр: </strong>{book.genre}</p>
+                      <p className='year'><strong>Рік: </strong>{book.publication_year}</p>
+                    </div>
+                    <button onClick={() => handleViewDetails(book.id)} className='detail-btn'>Детальніше</button>
+                    {isAdmin && (
+                      <button onClick={() => handleDeleteBook(selectedBook.id)} className='detail-btn' style={{backgroundColor: '#e74c3c', top: '60px'}}>Видалити книгу</button>
+                    )}
                   </div>
                 ))}
               </div>

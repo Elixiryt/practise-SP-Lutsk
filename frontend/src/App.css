@@ -20,10 +20,14 @@
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.05);
   transition: transform 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
 }
 
 .book-card:hover {transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.1);}
-.book-card h2 {margin: 0 0 15px 0; font-size: 1.2rem; color: #333;}
+.book-card h2 {margin: 0 0 15px 0; font-size: 1.2rem; color: #333; padding-right: 110px;}
 .book-card p {margin: 5px 0; color: #666; font-size: 0.95rem;}
 .book-card .year {color: #3498db;}
 
@@ -148,6 +152,7 @@
   padding: 40px;
   margin-top: 20px;
   box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+  position: relative;
 }
 
 .back-btn {
@@ -196,4 +201,21 @@
   font-size: 0.9rem;
   font-weight: bold;
   border: 1px solid #bdc3c7;
+}
+
+.detail-btn {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: absolute;
+  top: 20px;   /* Відступ від верхнього краю картки */
+  right: 20px; /* Відступ від правого краю картки */
+}
+
+.book-info {
+  margin-bottom: 20px;
 }
