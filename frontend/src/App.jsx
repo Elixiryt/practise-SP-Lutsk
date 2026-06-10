@@ -39,6 +39,8 @@ function App() {
   const [profileMessage, setProfileMessage] = useState('')
   const [profileError, setProfileError] = useState('')
 
+  const [isScraping, setIsScraping] = useState(false)
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -355,6 +357,34 @@ function App() {
     }
   }
 
+  const handleScrape = async () => {
+    if (!window.confirm('Запустити автоматичне збирання книг з books.toscrape.com? Це може зайняти кілька секунд.')) return;
+    
+    setIsScraping(true);
+    try {
+      const response = await fetch('http://localhost:8000/api/scrape/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Помилка при парсингу');
+      }
+      
+      alert(data.message);
+      loadBooks(); // Одразу оновлюємо список, щоб побачити нові книги!
+      
+    } catch (err) {
+      alert(`Помилка: ${err.message}`);
+    } finally {
+      setIsScraping(false);
+    }
+  }
+
   useEffect(() => {
     loadBooks();
   }, [currentUrl, token]);
@@ -493,9 +523,25 @@ return (
         <h1>Моя бібліотека</h1>
         <div>
           {isAdmin && (
-            <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn' style={{backgroundColor: '#2ecc71', marginRight: '10px'}}>+ Додати нову книгу</button>
+            <>
+              <button 
+                onClick={handleScrape} 
+                disabled={isScraping}
+                className='logout-btn' 
+                style={{backgroundColor: isScraping ? '#95a5a6' : '#8e44ad', marginRight: '10px'}}
+              >
+                {isScraping ? '⏳ Парсинг...' : '🤖 Спарсити книги'}
+              </button>
+
+              <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn' style={{backgroundColor: '#2ecc71', marginRight: '10px'}}>
+                + Додати нову книгу
+              </button>
+            </>
           )}
-          <button onClick={() => setView('profile')} className='logout-btn' style={{backgroundColor: '#3498db'}}>Мій профіль</button>
+          
+          <button onClick={() => setView('profile')} className='logout-btn' style={{backgroundColor: '#3498db', marginRight: '10px'}}>
+            Мій профіль
+          </button>
         </div>
       </div>
 

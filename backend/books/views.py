@@ -6,6 +6,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
+import requests
+from bs4 import BeautifulSoup
+from rest_framework.permissions import IsAdminUser
 
 class BookListCreateView(generics.ListCreateAPIView):
     queryset = Book.objects.all()
@@ -54,3 +57,42 @@ def change_password(request):
     request.user.save()
     
     return Response({'message': 'Пароль успішно змінено'})
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser]) # Дозволяємо запускати парсинг ТІЛЬКИ адміністраторам
+def scrape_books(request):
+    url = 'http://books.toscrape.com/'
+    
+    try:
+        response = requests.get(url)
+        # Використовуємо BeautifulSoup для розбору HTML
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # На цьому сайті всі книги лежать у тегах <article class="product_pod">
+        articles = soup.find_all('article', class_='product_pod')
+        
+        books_added = 0
+        for article in articles:
+            # Витягуємо назву книги з атрибута title в посиланні
+            title = article.h3.a['title']
+            
+            # Оскільки на цьому тестовому сайті немає авторів і років, ми ставимо заглушки, 
+            # щоб база даних не сварилася на порожні поля
+            author = "Невідомий автор (Scraped)"
+            genre = "Різне"
+            publication_year = 2024
+            
+            # Перевіряємо, чи немає вже такої книги в базі, щоб не створювати дублікати
+            if not Book.objects.filter(title=title).exists():
+                Book.objects.create(
+                    title=title,
+                    author=author,
+                    genre=genre,
+                    publication_year=publication_year
+                )
+                books_added += 1
+
+        return Response({'message': f'Парсинг завершено! Додано {books_added} нових книг.'})
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

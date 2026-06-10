@@ -20,7 +20,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from books.views import RegisterView, current_user, change_password
+from books.views import RegisterView, current_user, change_password, scrape_books
     
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,4 +31,5 @@ urlpatterns = [
     path('api/register/', RegisterView.as_view(), name='register'),
     path('api/me/', current_user, name='current-user'),
     path('api/change-password/', change_password, name='change-password'),
+    path('api/scrape/', scrape_books, name='scrape_books'),
 ]
