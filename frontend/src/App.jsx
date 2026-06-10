@@ -211,13 +211,50 @@ function App() {
       alert('Книга видалена успішно');
 
       setView('books')
-      setCurrentUrl('http://localhost:8000/api/books')
+      loadBooks();
     } catch(err) {
       setError(err.message);
     }
   }
 
-  useEffect(() => {
+  const handleUpdateBook = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/books/${selectedBook.id}/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: newTitle,
+          author: newAuthor,
+          genre: newGenre,
+          publication_year: newYear
+        })
+      });
+
+      if (response.status === 403) {
+        throw new Error('У вас немає прав адміністратора для редагування книги!')
+      }
+      if (!response.ok) {
+        throw new Error('Помилка при оновленні криги. Перевірте дані.')
+      }
+
+      alert('Книгу успішно оновлено!');
+
+      setNewTitle(''); setNewAuthor(''); setNewGenre(''); setNewYear('');
+
+      setView('books');
+      loadBooks();
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const loadBooks = () => {
     if (!token) return;
 
     setLoading(true)
@@ -244,6 +281,10 @@ function App() {
         setError(err.message)
         setLoading(false)
       })
+  }
+
+  useEffect(() => {
+    loadBooks();
   }, [currentUrl, token]);
 
   useEffect(() => {
@@ -387,8 +428,31 @@ return (
             <div className="details-card">
               <button onClick={() => setView('books')} className="back-btn"> ← Назад до списку</button>
               {isAdmin && (
-                <button onClick={() => handleDeleteBook(selectedBook.id)} className='detail-btn' style={{backgroundColor: '#e74c3c'}}>Видалити книгу</button>
-              )}
+                  <div>
+                    <button 
+                      onClick={() => {
+                        // Копіюємо дані книги у форму
+                        setNewTitle(selectedBook.title);
+                        setNewAuthor(selectedBook.author);
+                        setNewGenre(selectedBook.genre);
+                        setNewYear(selectedBook.publication_year);
+                        setView('editBook'); // Відкриваємо форму редагування
+                      }} 
+                      className="detail-btn" 
+                      style={{ backgroundColor: '#f39c12'}}
+                    >
+                      Редагувати
+                    </button>
+
+                    <button 
+                      onClick={() => handleDeleteBook(selectedBook.id)} 
+                      className="detail-btn" 
+                      style={{ backgroundColor: '#e74c3c', top: '60px' }}
+                    >
+                      Видалити
+                    </button>
+                  </div>
+                )}
               
               <h2 className="details-title">{selectedBook.title}</h2>
               <p className="details-author">Автор: {selectedBook.author}</p>
@@ -413,7 +477,19 @@ return (
                 <button type="submit">Зберегти книгу</button>
               </form>
             </div>
+          ) : view === 'editBook' ? (
+            <div className='login-box' style={{maxWidth: '500px'}}>
+              <button onClick={() => setView('bookDetails')} className='back-btn' style={{marginBottom: '15px'}}>← Скасувати і повернутись</button>
+              <h2>Редагувати книгу</h2>
 
+              <form onSubmit={handleUpdateBook} className='login-form'>
+                <input type='text' placeholder='Назва книги' value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required/>
+                <input type='text' placeholder='Автор' value={newAuthor} onChange={(e) => setNewAuthor(e.target.value)} required/>
+                <input type='text' placeholder='Жанр' value={newGenre} onChange={(e) => setNewGenre(e.target.value)}required/>
+                <input type='number' placeholder='Рік видання' value={newYear} onChange={(e) => setNewYear(e.target.value)} required/>
+                <button type='submit' style={{backgroundColor: '#f39c12'}}>Оновити дані</button>
+              </form>
+            </div>
           /* 3. ІНАКШЕ (ЗА ЗАМОВЧУВАННЯМ) ПОКАЗУЄМО СПИСОК */
           ) : (
             <>
