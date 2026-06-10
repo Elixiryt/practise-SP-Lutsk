@@ -5,13 +5,18 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.contrib.auth.models import User
+from django_filters.rest_framework import DjangoFilterBackend
 
 class BookListCreateView(generics.ListCreateAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticated]
 
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = {
+        'genre': ['icontains'],
+        'publication_year': ['gte', 'lte']
+    }
     search_fields = ['title', 'author', 'genre']
     ordering_fields = ['publication_year', 'created_at']
     

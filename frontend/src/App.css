@@ -219,3 +219,66 @@
 .book-info {
   margin-bottom: 20px;
 }
+
+.filter-panel {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e1e1e1;
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.filter-input {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-family: inherit;
+}
+
+/* Розміри для різних полів вводу */
+.filter-input.large {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-input.medium {
+  width: 150px;
+}
+
+.filter-input.small {
+  width: 100px;
+}
+
+/* Кнопки у фільтрі */
+.filter-btn {
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.filter-btn.primary {
+  background-color: #3498db;
+}
+
+.filter-btn.primary:hover {
+  background-color: #2980b9;
+}
+
+.filter-btn.secondary {
+  background-color: #95a5a6;
+}
+
+.filter-btn.secondary:hover {
+  background-color: #7f8c8d;
+}

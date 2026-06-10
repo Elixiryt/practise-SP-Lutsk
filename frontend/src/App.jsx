@@ -28,6 +28,11 @@ function App() {
   const [nextUrl, setNextUrl] = useState(null)
   const [prevUrl, setPrevUrl] = useState(null)
 
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterGenre, setFilterGenre] = useState('')
+  const [minYear, setMinYear] = useState('')
+  const [maxYear, setMaxYear] = useState('')
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -283,6 +288,28 @@ function App() {
       })
   }
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    const params = new URLSearchParams();
+
+    if (searchQuery) params.append('search', searchQuery);
+    if (filterGenre) params.append('genre__icontains', filterGenre);
+    if (minYear) params.append('publication_year_gte', minYear);
+    if (maxYear) params.append('publication_year__lte', maxYear);
+
+    setCurrentUrl(`http://localhost:8000/api/books/?${params.toString()}`);
+  }
+
+  const handleResetFilters = () => {
+    e.preventDefault();
+
+    setSearchQuery('')
+    setFilterGenre('')
+    setMinYear('')
+    setMaxYear('')
+  }
+
   useEffect(() => {
     loadBooks();
   }, [currentUrl, token]);
@@ -493,6 +520,16 @@ return (
           /* 3. ІНАКШЕ (ЗА ЗАМОВЧУВАННЯМ) ПОКАЗУЄМО СПИСОК */
           ) : (
             <>
+              <div className='filter-panel'>
+                <form onSubmit={handleSearch} className='filter-form'>
+                  <input type='text' placeholder='Пошук за назвою чи автором...' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className='filter-input large'/>
+                  <input type='text' placeholder='Жанр...' value={filterGenre} onChange={(e) => setFilterGenre(e.target.value)} className='filter-input small'/>
+                  <input type='number' placeholder='Рік від' value={minYear} onChange={(e) => setMinYear(e.target.value)} className='filter-input small'/>
+                  <input type='number' placeholder='Рік до' value={maxYear} onChange={(e) => setMaxYear(e.target.value)} className='filter-input small'/>
+                  <button type='submit' className='filter-btn primary'>Шукати</button>
+                  <button type='button' onClick={handleResetFilters} className='filter-btn secondary'>Скинути</button>
+                </form>
+              </div>
               <div className='books-grid'>
                 {books.map(book => (
                   <div key={book.id} className='book-card'>
