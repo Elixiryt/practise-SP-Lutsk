@@ -38,3 +38,19 @@ def current_user(request):
         'email': request.user.email,
         'is_staff': request.user.is_staff
     })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    old_password = request.data.get('old_password')
+    new_password = request.data.get('new_password')
+
+    # Перевіряємо, чи правильно введено старий пароль
+    if not request.user.check_password(old_password):
+        return Response({'error': 'Неправильний старий пароль'}, status=400)
+
+    # Встановлюємо новий пароль і зберігаємо
+    request.user.set_password(new_password)
+    request.user.save()
+    
+    return Response({'message': 'Пароль успішно змінено'})

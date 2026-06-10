@@ -34,6 +34,11 @@ function App() {
   const [minYear, setMinYear] = useState('')
   const [maxYear, setMaxYear] = useState('')
 
+  const [oldPassword, setOldPassword] = useState('')
+  const [profileNewPassword, setProfileNewPassword] = useState('')
+  const [profileMessage, setProfileMessage] = useState('')
+  const [profileError, setProfileError] = useState('')
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -318,6 +323,38 @@ function App() {
     setMaxYear('')
   }
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileMessage('');
+
+    try {
+      const response = await fetch('http://localhost:8000/api/change-password/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          old_password: oldPassword,
+          new_password: profileNewPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Помилка при зміні пароля');
+      }
+
+      setProfileMessage('Пароль успішно змінено!');
+      setOldPassword('');
+      setProfileNewPassword('');
+    } catch (err) {
+      setProfileError(err.message);
+    }
+  }
+
   useEffect(() => {
     loadBooks();
   }, [currentUrl, token]);
@@ -458,7 +495,6 @@ return (
           {isAdmin && (
             <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn' style={{backgroundColor: '#2ecc71', marginRight: '10px'}}>+ Додати нову книгу</button>
           )}
-          <button onClick={handleLogout} className='logout-btn'>Вийти з аккаунта</button>
           <button onClick={() => setView('profile')} className='logout-btn' style={{backgroundColor: '#3498db'}}>Мій профіль</button>
         </div>
       </div>
@@ -551,18 +587,50 @@ return (
                <h2>Мій профіль</h2>
 
                {userProfile ? (
-                <div style={{marginTop: '20px', fontSize: '18px', lineHeight: '1.6'}}>
-                  <p><strong>Юзернейм:</strong> {userProfile.username}</p>
-                  <p><strong>Email:</strong> {userProfile.email}</p>
-                  <p>
-                    <strong>Cтатус:</strong>
-                    {userProfile.is_staff ? (
-                      <span style={{color: '#e74c3c', fontWeight: 'bold'}}>Адміністратор</span>
-                    ) : (
-                      <span style={{color: '#2ecc71', fontWeight: 'bold'}}>Читач</span>
-                    )}
-                  </p>
-                </div>
+                 <>
+                  <div style={{marginTop: '20px', fontSize: '18px', lineHeight: '1.6'}}>
+                    <p><strong>Юзернейм:</strong> {userProfile.username}</p>
+                    <p><strong>Email:</strong> {userProfile.email}</p>
+                    <p>
+                      <strong>Cтатус:</strong>
+                      {userProfile.is_staff ? (
+                        <span style={{color: '#e74c3c', fontWeight: 'bold'}}> Адміністратор</span>
+                      ) : (
+                        <span style={{color: '#2ecc71', fontWeight: 'bold'}}> Читач</span>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* 🔥 ОСЬ СЮДИ ВСТАВЛЯЄМО ФОРМУ ЗМІНИ ПАРОЛЯ */}
+                  <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+                    <h3>Змінити пароль</h3>
+                    
+                    {profileMessage && <p className="success" style={{color: '#2ecc71'}}>{profileMessage}</p>}
+                    {profileError && <p className="error" style={{color: '#e74c3c'}}>{profileError}</p>}
+                    
+                    <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px', marginTop: '10px' }}>
+                      <input 
+                        type="password" 
+                        placeholder="Старий пароль" 
+                        value={oldPassword} 
+                        onChange={(e) => setOldPassword(e.target.value)} 
+                        required 
+                        style={{ padding: '8px', borderRadius: '5px', border: '1px solid #ccc' }}
+                      />
+                      <input 
+                        type="password" 
+                        placeholder="Новий пароль" 
+                        value={profileNewPassword} 
+                        onChange={(e) => setProfileNewPassword(e.target.value)} 
+                        required 
+                        style={{ padding: '8px', borderRadius: '5px', border: '1px solid #ccc' }}
+                      />
+                      <button type="submit" style={{ backgroundColor: '#34495e', color: 'white', padding: '10px', borderRadius: '5px', border: 'none', cursor: 'pointer' }}>
+                        Оновити пароль
+                      </button>
+                    </form>
+                  </div>
+                </>
                ) : (
                 <p>Завантаження даних...</p>
                )}

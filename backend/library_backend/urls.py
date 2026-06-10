@@ -20,7 +20,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from books.views import RegisterView, current_user
+from books.views import RegisterView, current_user, change_password
     
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,5 +29,6 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     path('api/register/', RegisterView.as_view(), name='register'),
-    path('api/me/', current_user, name='current-user')
+    path('api/me/', current_user, name='current-user'),
+    path('api/change-password/', change_password, name='change-password'),
 ]
