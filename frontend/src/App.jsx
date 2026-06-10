@@ -310,7 +310,7 @@ function App() {
 
     if (searchQuery) params.append('search', searchQuery);
     if (filterGenre) params.append('genre__icontains', filterGenre);
-    if (minYear) params.append('publication_year_gte', minYear);
+    if (minYear) params.append('publication_year__gte', minYear);
     if (maxYear) params.append('publication_year__lte', maxYear);
 
     setCurrentUrl(`http://localhost:8000/api/books/?${params.toString()}`);
