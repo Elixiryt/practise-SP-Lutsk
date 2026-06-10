@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import './App.css'
 
 function App() {
@@ -7,6 +7,11 @@ function App() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [token, setToken] = useState(localStorage.getItem('access_token') || null)
+
+  const [newTitle, setNewTitle] = useState('')
+  const [newAuthor, setNewAuthor] = useState('')
+  const [newGenre, setNewGenre] = useState('')
+  const [newYear, setNewYear] = useState('')
 
   const [email, setEmail] = useState('')
   const [resetToken, setResetToken] = useState('')
@@ -144,6 +149,45 @@ function App() {
     }  
   }
 
+  const handleAddBook = async (e) => {
+    e.preventDefault();
+    setError(null)
+    setMessage('')
+
+    try {
+      const response = await fetch('http://localhost:8000/api/books/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: newTitle,
+          author: newAuthor,
+          genre: newGenre,
+          publication_year: newYear
+        })
+      });
+
+      if (response.status === 403) {
+        throw Error('У вас немає прав адміністратора для додавання книг!');
+      }
+
+      if (!response.ok) {
+        throw Error('Помилка при додаванні книги. Перевірте дані.');
+      }
+
+      alert('Книгу успішно додано!');
+
+      setNewTitle(''); setNewAuthor(''); setNewGenre(''); setNewYear('');
+
+      setView('books')
+      setCurrentUrl('http://localhost:8000/api/books')
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   useEffect(() => {
     if (!token) return;
 
@@ -277,7 +321,10 @@ return (
     <div className='app-container'>
       <div className='header-flex'>
         <h1>Моя бібліотека</h1>
-        <button onClick={handleLogout} className='logout-btn'>Вийти з аккаунта</button>
+        <div>
+          <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn' style={{backgroundColor: '#2ecc71', marginRight: '10px'}}>+ Додати нову книгу</button>
+          <button onClick={handleLogout} className='logout-btn'>Вийти з аккаунта</button>
+        </div>
       </div>
 
       {loading && books.length === 0 ? (
@@ -286,6 +333,7 @@ return (
         <div className='status-message error'>Помилка: {error}</div>
       ) : (
         <>
+          {/* 1. ЯКЩО РЕЖИМ ПЕРЕГЛЯДУ ДЕТАЛЕЙ */}
           {view === 'bookDetails' && selectedBook ? (
             <div className="details-card">
               <button onClick={() => setView('books')} className="back-btn">
@@ -300,6 +348,25 @@ return (
                 <span className="meta-badge">{selectedBook.genre}</span>
               </div>
             </div>
+
+          /* 2. ІНАКШЕ ЯКЩО РЕЖИМ ДОДАВАННЯ КНИГИ */
+          ) : view === 'addBook' ? (
+            <div className="login-box" style={{ maxWidth: '500px' }}>
+              <button onClick={() => setView('books')} className="back-btn" style={{marginBottom: '15px'}}>
+                ← Назад до списку
+              </button>
+              <h2>Додати нову книгу</h2>
+              
+              <form onSubmit={handleAddBook} className="login-form">
+                <input type="text" placeholder="Назва книги" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required />
+                <input type="text" placeholder="Автор" value={newAuthor} onChange={(e) => setNewAuthor(e.target.value)} required />
+                <input type="text" placeholder="Жанр" value={newGenre} onChange={(e) => setNewGenre(e.target.value)} required />
+                <input type="number" placeholder="Рік видання" value={newYear} onChange={(e) => setNewYear(e.target.value)} required />
+                <button type="submit">Зберегти книгу</button>
+              </form>
+            </div>
+
+          /* 3. ІНАКШЕ (ЗА ЗАМОВЧУВАННЯМ) ПОКАЗУЄМО СПИСОК */
           ) : (
             <>
               <div className='books-grid'>
