@@ -9,6 +9,7 @@ function App() {
 
   const [token, setToken] = useState(localStorage.getItem('access_token') || null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userProfile, setUserProfile] = useState(null)
 
   const [newTitle, setNewTitle] = useState('')
   const [newAuthor, setNewAuthor] = useState('')
@@ -132,9 +133,16 @@ function App() {
 
   const handleLogout = () => {
     setToken(null);
-    localStorage.removeItem('access_token'); // Краще повністю видаляти токен
+    localStorage.removeItem('access_token'); 
     setBooks([]);
+    
+    // 🔥 ДОДАЄМО ЦІ ДВА РЯДКИ:
+    setView('login'); // Примусово повертаємо форму входу
+    setError(null);   // Очищаємо старі червоні помилки (як той NetworkError)
+    setUsername('');
+    setPassword('');
   }
+
 
   const handleViewDetails = async (bookId) => {
     try {
@@ -315,8 +323,9 @@ function App() {
   }, [currentUrl, token]);
 
   useEffect(() => {
-        if (!token) {
+    if (!token) {
       setIsAdmin(false);
+      setUserProfile(null);
       return;
     };
 
@@ -324,12 +333,21 @@ function App() {
       headers: {'Authorization': `Bearer ${token}`}
     })
       .then(response => {
-        if (response.ok) return response.json();
+        if (!response.ok) throw new Error('Помилка сервера при отриманні профілю');
+        return response.json();
       })
       .then(data => {
-        if (data) setIsAdmin(data.is_staff);
+        console.log("Отримано дані профілю:", data); // 🔥 Виводимо в консоль для перевірки
+        if (data) {
+          setIsAdmin(data.is_staff);
+          setUserProfile(data); 
+        }
       })
-      .catch(err => console.error('Не вдалося перевірити роль:', err));
+      .catch(err => {
+        console.error('Не вдалося завантажити профіль:', err);
+        // Якщо сталася помилка, ставимо порожній об'єкт, щоб прибрати надпис "Завантаження..."
+        setUserProfile({ username: 'Помилка', email: 'Помилка', is_staff: false }); 
+      });
   }, [token]);
 
   if (loading && books.length === 0 && token) return <div className="status-message">Завантаження книг...</div>
@@ -441,6 +459,7 @@ return (
             <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn' style={{backgroundColor: '#2ecc71', marginRight: '10px'}}>+ Додати нову книгу</button>
           )}
           <button onClick={handleLogout} className='logout-btn'>Вийти з аккаунта</button>
+          <button onClick={() => setView('profile')} className='logout-btn' style={{backgroundColor: '#3498db'}}>Мій профіль</button>
         </div>
       </div>
 
@@ -518,6 +537,36 @@ return (
               </form>
             </div>
           /* 3. ІНАКШЕ (ЗА ЗАМОВЧУВАННЯМ) ПОКАЗУЄМО СПИСОК */
+          ) : view === 'profile' ? (
+            <div className='details-card' style={{maxWidth: '600px', margin: '0 auto', marginTop: '20px'}}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                  <button onClick={() => setView('books')} className="back-btn" style={{ marginBottom: 0 }}>
+                    ← Назад до бібліотеки
+                  </button>
+                  
+                  <button onClick={handleLogout} className="logout-btn" style={{ backgroundColor: '#e74c3c', marginTop: 0 }}>
+                    Вийти з аккаунта
+                  </button>
+                </div>
+               <h2>Мій профіль</h2>
+
+               {userProfile ? (
+                <div style={{marginTop: '20px', fontSize: '18px', lineHeight: '1.6'}}>
+                  <p><strong>Юзернейм:</strong> {userProfile.username}</p>
+                  <p><strong>Email:</strong> {userProfile.email}</p>
+                  <p>
+                    <strong>Cтатус:</strong>
+                    {userProfile.is_staff ? (
+                      <span style={{color: '#e74c3c', fontWeight: 'bold'}}>Адміністратор</span>
+                    ) : (
+                      <span style={{color: '#2ecc71', fontWeight: 'bold'}}>Читач</span>
+                    )}
+                  </p>
+                </div>
+               ) : (
+                <p>Завантаження даних...</p>
+               )}
+            </div>
           ) : (
             <>
               <div className='filter-panel'>
@@ -541,7 +590,7 @@ return (
                     </div>
                     <button onClick={() => handleViewDetails(book.id)} className='detail-btn'>Детальніше</button>
                     {isAdmin && (
-                      <button onClick={() => handleDeleteBook(selectedBook.id)} className='detail-btn' style={{backgroundColor: '#e74c3c', top: '60px'}}>Видалити книгу</button>
+                      <button onClick={() => handleDeleteBook(book.id)} className='detail-btn' style={{backgroundColor: '#e74c3c', top: '60px'}}>Видалити книгу</button>
                     )}
                   </div>
                 ))}

@@ -35,5 +35,6 @@ class RegisterView(generics.CreateAPIView):
 def current_user(request):
     return Response({
         'username': request.user.username,
+        'email': request.user.email,
         'is_staff': request.user.is_staff
     })
