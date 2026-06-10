@@ -411,6 +411,37 @@ const handleScrape = async (e) => {
     }
   }
 
+  const handleExportExcel = async () => {
+    const params = new URLSearchParams();
+    
+    if (searchQuery) params.append('search', searchQuery);
+    if (filterGenre) params.append('genre__icontains', filterGenre);
+    if (minYear) params.append('publication_year__gte', minYear);
+    if (maxYear) params.append('publication_year__lte', maxYear);
+
+    console.log("DEBUG: Експорт з параметрами:", params.toString());
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/export-excel/?${params.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.status === 403) throw new Error('Тільки адміністратор має доступ!');
+      if (!response.ok) throw new Error('Не вдалося сформувати Excel-звіт');
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', 'library_report.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
   useEffect(() => {
     loadBooks();
   }, [currentUrl, token]);
@@ -438,21 +469,17 @@ const handleScrape = async (e) => {
       })
       .catch(err => {
         console.error('Не вдалося завантажити профіль:', err);
-        // Якщо сталася помилка, ставимо порожній об'єкт, щоб прибрати надпис "Завантаження..."
         setUserProfile({ username: 'Помилка', email: 'Помилка', is_staff: false }); 
       });
   }, [token]);
 
-  // 🔥 ЛОГІКА ЖИВОГО ПОШУКУ (Спадне меню)
   useEffect(() => {
-    // Якщо введено менше 2 символів, ховаємо меню і нічого не шукаємо
     if (searchQuery.trim().length < 2) {
       setSuggestions([]);
       setShowDropdown(false);
       return;
     }
 
-    // Функція, яка тихо підтягує підказки з бекенду
     const fetchSuggestions = async () => {
       try {
         const response = await fetch(`http://localhost:8000/api/books/?search=${searchQuery}`, {
@@ -460,7 +487,6 @@ const handleScrape = async (e) => {
         });
         if (response.ok) {
           const data = await response.json();
-          // Беремо тільки перші 5 результатів для підказки
           setSuggestions(data.results.slice(0, 5)); 
           setShowDropdown(true);
         }
@@ -469,21 +495,15 @@ const handleScrape = async (e) => {
       }
     };
 
-    // Запускаємо пошук через 300 мілісекунд після того, як юзер перестав друкувати
     const timeoutId = setTimeout(() => {
       fetchSuggestions();
     }, 300);
-
-    // Якщо юзер натиснув нову клавішу до того як пройшло 300мс - скидаємо старий таймер
     return () => clearTimeout(timeoutId);
   }, [searchQuery, token]);
 
-  // 🔥 ЛОГІКА ПІДКАЗОК ДЛЯ ЖАНРІВ
-  // 🔥 ОНОВЛЕНА ЛОГІКА ПІДКАЗОК ДЛЯ ЖАНРІВ (показує одразу)
   useEffect(() => {
     const fetchGenreSuggestions = async () => {
       try {
-        // Якщо юзер щось ввів - шукаємо по буквах. Якщо ні - просто беремо останні книги
         const url = filterGenre.trim() 
           ? `http://localhost:8000/api/books/?genre__icontains=${filterGenre}`
           : `http://localhost:8000/api/books/`;
@@ -494,7 +514,6 @@ const handleScrape = async (e) => {
         
         if (response.ok) {
           const data = await response.json();
-          // Витягуємо унікальні жанри (і відкидаємо порожні)
           const uniqueGenres = [...new Set(data.results.map(book => book.genre).filter(Boolean))];
           setGenreSuggestions(uniqueGenres.slice(0, 5)); 
         }
@@ -503,7 +522,6 @@ const handleScrape = async (e) => {
       }
     };
 
-    // Якщо ми тільки клікнули на поле (воно порожнє) - вантажимо одразу, інакше чекаємо 300мс
     const delay = filterGenre.trim() ? 300 : 0;
     const timeoutId = setTimeout(() => fetchGenreSuggestions(), delay);
     
@@ -864,7 +882,7 @@ return (
                       value={filterGenre} 
                       onChange={(e) => setFilterGenre(e.target.value)} 
                       onBlur={() => setTimeout(() => setShowGenreDropdown(false), 200)} 
-                      onFocus={() => setShowGenreDropdown(true)} // 🔥 ЗМІНА: Відкриваємо одразу при кліку
+                      onFocus={() => setShowGenreDropdown(true)} 
                       className='filter-input small'
                       style={{ width: '100%', boxSizing: 'border-box' }}
                     />
@@ -898,6 +916,20 @@ return (
                   
                   <button type='submit' className='filter-btn primary'>Шукати</button>
                   <button type='button' onClick={handleResetFilters} className='filter-btn secondary'>Скинути</button>
+                  
+                  {isAdmin && (
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleExportExcel();
+                      }} 
+                      className='filter-btn' 
+                      style={{ backgroundColor: '#27ae60', color: 'white', marginLeft: 'auto' }}
+                    >
+                      В Excel
+                    </button>
+                  )}
                 </form>
               </div>
               <div className='books-grid'>

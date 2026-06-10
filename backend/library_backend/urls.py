@@ -16,11 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-from books.views import RegisterView, current_user, change_password, scrape_books, get_unique_genres
+from rest_framework_simplejwt.views import (TokenObtainPairView,TokenRefreshView,)
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from books.views import RegisterView, current_user, change_password, scrape_books, export_excel
     
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,4 +30,7 @@ urlpatterns = [
     path('api/me/', current_user, name='current-user'),
     path('api/change-password/', change_password, name='change-password'),
     path('api/scrape/', scrape_books, name='scrape_books'),
+    path('api/export-excel/', export_excel, name='export_excel'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]

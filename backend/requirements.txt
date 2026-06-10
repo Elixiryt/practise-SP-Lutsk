@@ -7,3 +7,5 @@ django-rest-passwordreset
 django-filter
 requests
 beautifulsoup4
+openpyxl
+drf-spectacular
