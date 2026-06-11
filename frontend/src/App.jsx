@@ -7,20 +7,24 @@ function App() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
+  //Інформація про акк
   const [token, setToken] = useState(localStorage.getItem('access_token') || null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [userProfile, setUserProfile] = useState(null)
 
+  //Інформація про книги
   const [newTitle, setNewTitle] = useState('')
   const [newAuthor, setNewAuthor] = useState('')
   const [newGenre, setNewGenre] = useState('')
   const [newYear, setNewYear] = useState('')
 
+  //Дані для відновлення паролю
   const [email, setEmail] = useState('')
   const [resetToken, setResetToken] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [message, setMessage] = useState('')
 
+  //для списку книг
   const [selectedBook, setSelectedBook] = useState(null)
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(false) // Початково краще false
@@ -29,27 +33,31 @@ function App() {
   const [nextUrl, setNextUrl] = useState(null)
   const [prevUrl, setPrevUrl] = useState(null)
 
+  //для dropdown меню
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [genreSuggestions, setGenreSuggestions] = useState([]);
   const [showGenreDropdown, setShowGenreDropdown] = useState(false);
 
+  //для пошуку
   const [searchQuery, setSearchQuery] = useState('')
   const [filterGenre, setFilterGenre] = useState('')
   const [minYear, setMinYear] = useState('')
   const [maxYear, setMaxYear] = useState('')
 
+  //зміна паролю в кабінеті
   const [oldPassword, setOldPassword] = useState('')
   const [profileNewPassword, setProfileNewPassword] = useState('')
   const [profileMessage, setProfileMessage] = useState('')
   const [profileError, setProfileError] = useState('')
 
+  //для парсингу
   const [isScraping, setIsScraping] = useState(false)
-
   const [scrapeQuery, setScrapeQuery] = useState('Python');
   const [scrapeCount, setScrapeCount] = useState(5); 
   const [showScrapeMenu, setShowScrapeMenu] = useState(false);
 
+  //dropdown меню для парсингу
   const [scrapeSuggestions, setScrapeSuggestions] = useState([]);
   const [showScrapeDropdown, setShowScrapeDropdown] = useState(false);
   const OPEN_LIBRARY_SUBJECTS = [
@@ -58,13 +66,13 @@ function App() {
     "Science Fiction", "Fantasy", "Mystery", "Romance", "Horror",
     "History", "Psychology", "Business", "Art", "Cooking"
   ];
-
   const availableScrapeGenres = OPEN_LIBRARY_SUBJECTS.filter(g => 
     g.toLowerCase().includes(scrapeQuery.toLowerCase())
   );
 
+  //логі
   const handleLogin = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); //не перезавантажує сторінку
     try {
       const response = await fetch('http://localhost:8000/api/token/', {
         method: 'POST',
@@ -83,6 +91,7 @@ function App() {
     }
   }
 
+  //для заявки на зміну паролю(забув пароль)
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     setError(null);
@@ -104,6 +113,7 @@ function App() {
     }
   }
 
+  //підтвердження зміни паролю (забув пароль)
   const handleConfirmReset = async (e) => {
     e.preventDefault();
     setError(null);
@@ -126,21 +136,17 @@ function App() {
     }
   }
 
+  //реєстрація
   const handleRegistration = async (e) => {
     e.preventDefault();
     setError(null);
     setMessage('')
-
-    console.log("Кнопка реєстрації натиснута")
-    console.log("дані для реєстрації:", {username, email, password, confirmPassword})
 
     if (password !== confirmPassword) {
       console.log("Паролі не збігаються")
       setError('Паролі не збігаються!');
       return;
     }
-
-    console.log("Відправка fetch")
 
     try {
       const response = await fetch('http://localhost:8000/api/register/', {
@@ -164,19 +170,19 @@ function App() {
     }
   }
 
+  //для логаут
   const handleLogout = () => {
     setToken(null);
     localStorage.removeItem('access_token'); 
     setBooks([]);
     
-    // 🔥 ДОДАЄМО ЦІ ДВА РЯДКИ:
     setView('login'); // Примусово повертаємо форму входу
     setError(null);   // Очищаємо старі червоні помилки (як той NetworkError)
     setUsername('');
     setPassword('');
   }
 
-
+  //перегляд деталей книги
   const handleViewDetails = async (bookId) => {
     try {
       const response = await fetch(`http://localhost:8000/api/books/${bookId}/`, {
@@ -197,6 +203,7 @@ function App() {
     }  
   }
 
+  //додавання книги
   const handleAddBook = async (e) => {
     e.preventDefault();
     setError(null)
@@ -217,10 +224,6 @@ function App() {
         })
       });
 
-      if (response.status === 403) {
-        throw Error('У вас немає прав адміністратора для додавання книг!');
-      }
-
       if (!response.ok) {
         throw Error('Помилка при додаванні книги. Перевірте дані.');
       }
@@ -230,12 +233,13 @@ function App() {
       setNewTitle(''); setNewAuthor(''); setNewGenre(''); setNewYear('');
 
       setView('books')
-      setCurrentUrl('http://localhost:8000/api/books')
+      setCurrentUrl('http://localhost:8000/api/books/')
     } catch (err) {
       setError(err.message)
     }
   }
 
+  //видалення книг
   const handleDeleteBook = async (bookId) => {
     if (!window.confirm('Ви впевнені що хочете видалити цю книгу назавжди?')) {
       return;
@@ -263,6 +267,7 @@ function App() {
     }
   }
 
+  //зміна даних книги
   const handleUpdateBook = async (e) => {
     e.preventDefault();
     setError(null);
@@ -300,6 +305,7 @@ function App() {
     }
   }
 
+  //завантаження списку книг
   const loadBooks = () => {
     if (!token) return;
 
@@ -329,6 +335,7 @@ function App() {
       })
   }
 
+  //пошук
   const handleSearch = (e) => {
     e.preventDefault();
 
@@ -342,6 +349,7 @@ function App() {
     setCurrentUrl(`http://localhost:8000/api/books/?${params.toString()}`);
   }
 
+  //скидання фільтрів
   const handleResetFilters = (e) => {
     e.preventDefault();
 
@@ -351,6 +359,7 @@ function App() {
     setMaxYear('')
   }
 
+  //зміна паролю в кабінеті
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setProfileError('');
@@ -383,7 +392,8 @@ function App() {
     }
   }
 
-const handleScrape = async (e) => {
+  //парсинг
+  const handleScrape = async (e) => {
     e.preventDefault(); // Зупиняємо перезавантаження сторінки
     setIsScraping(true);
     
@@ -415,6 +425,7 @@ const handleScrape = async (e) => {
     }
   }
 
+  //експорт в ексель
   const handleExportExcel = async () => {
     const params = new URLSearchParams();
     
@@ -446,10 +457,12 @@ const handleScrape = async (e) => {
     }
   }
 
+  //завантаження списку книг
   useEffect(() => {
     loadBooks();
   }, [currentUrl, token]);
 
+  //завантаження профілю
   useEffect(() => {
     if (!token) {
       setIsAdmin(false);
@@ -465,7 +478,6 @@ const handleScrape = async (e) => {
         return response.json();
       })
       .then(data => {
-        console.log("Отримано дані профілю:", data); // 🔥 Виводимо в консоль для перевірки
         if (data) {
           setIsAdmin(data.is_staff);
           setUserProfile(data); 
@@ -477,6 +489,7 @@ const handleScrape = async (e) => {
       });
   }, [token]);
 
+  //дропдаун меню для пошуку
   useEffect(() => {
     if (searchQuery.trim().length < 2) {
       setSuggestions([]);
@@ -505,6 +518,7 @@ const handleScrape = async (e) => {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, token]);
 
+  //дропдаун меню для жанрів
   useEffect(() => {
     const fetchGenreSuggestions = async () => {
       try {
@@ -532,9 +546,10 @@ const handleScrape = async (e) => {
     return () => clearTimeout(timeoutId);
   }, [filterGenre, token]);
 
-  if (loading && books.length === 0 && token) return <div className="status-message">Завантаження книг...</div>
-  if (error && token) return <div className='status-message error'>Помилка: {error}</div>
+  if (loading && books.length === 0 && token) return <div className="status-message">Завантаження книг...</div>//завантаження книг
+  if (error && token) return <div className='status-message error'>Помилка: {error}</div>//вивід помилки на екран
 
+  //якщо немає токену виводить логін
   if (!token) {
     return (
       <div className='app-container'>
@@ -564,6 +579,7 @@ const handleScrape = async (e) => {
             </>
           )}
           
+          {/*виведення екрану відновлення паролю*/}
           {view === 'forgot' && (
             <>
               <h1>Відновлення паролю</h1>
@@ -576,6 +592,7 @@ const handleScrape = async (e) => {
             </>
           )}
 
+          {/*підтвердження відновлення паролю*/}
           {view === 'reset' && (
             <>
               <h1>Введіть новий пароль</h1>
@@ -589,6 +606,7 @@ const handleScrape = async (e) => {
             </>
           )}
 
+          {/*реєстрація*/}
           {view === 'register' && (
             <>
               <h1>Реєстрація</h1>
@@ -632,9 +650,10 @@ const handleScrape = async (e) => {
     );
   }
 
+//запускає список книг якщо є токен
 return (
     <div className='app-container'>
-<div className='header-flex'>
+      <div className='header-flex'>
         <h1>Моя бібліотека</h1>
         <div>
           {isAdmin && (
@@ -677,22 +696,14 @@ return (
                   </div>
 
                   <input type="number" value={scrapeCount} onChange={e => setScrapeCount(e.target.value)} placeholder="К-сть" style={{padding: '7px', width: '60px', borderRadius: '4px', border: '1px solid #ccc'}} required min="1" max="50"/>
-                  <button type="submit" disabled={isScraping} className='logout-btn logout-btn--purple' style={{margin: 0}}>
-                    {isScraping ? 'Завантажується...' : 'Запуск'}
-                  </button>
-                  <button type="button" onClick={() => setShowScrapeMenu(false)} className='logout-btn' style={{margin: 0, padding: '8px 12px'}}>
-                    ✕
-                  </button>
+                  <button type="submit" disabled={isScraping} className='logout-btn logout-btn--purple' style={{margin: 0}}>{isScraping ? 'Завантажується...' : 'Запуск'}</button>
+                  <button type="button" onClick={() => setShowScrapeMenu(false)} className='logout-btn' style={{margin: 0, padding: '8px 12px'}}>✕</button>
                 </form>
               ) : (
-                <button onClick={() => setShowScrapeMenu(true)} className='logout-btn logout-btn--purple'>
-                  Розумний парсер
-                </button>
+                <button onClick={() => setShowScrapeMenu(true)} className='logout-btn logout-btn--purple'>Розумний парсер</button>
               )}
 
-              <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn logout-btn--green'>
-                + Додати нову книгу
-              </button>
+              <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn logout-btn--green'>+ Додати нову книгу</button>
             </>
           )}
           
@@ -706,7 +717,7 @@ return (
         <div className='status-message error'>Помилка: {error}</div>
       ) : (
         <>
-          {/* 1. ЯКЩО РЕЖИМ ПЕРЕГЛЯДУ ДЕТАЛЕЙ */}
+        {/*перегляд деталей про книгу*/}
           {view === 'bookDetails' && selectedBook ? (
             <div className="details-card">
               <button onClick={() => setView('books')} className="back-btn"> ← Назад до списку</button>
@@ -721,16 +732,12 @@ return (
                         setView('editBook');
                       }} 
                       className="detail-btn detail-btn--edit"
-                    >
-                      Редагувати
-                    </button>
+                    >Редагувати</button>
 
                     <button 
                       onClick={() => handleDeleteBook(selectedBook.id)} 
                       className="detail-btn detail-btn--delete"
-                    >
-                      Видалити
-                    </button>
+                    >Видалити</button>
                   </div>
                 )}
               
@@ -743,6 +750,7 @@ return (
               </div>
             </div>
 
+          //додавання книги   
           ) : view === 'addBook' ? (
             <div className="login-box" style={{ maxWidth: '500px' }}>
               <button onClick={() => setView('books')} className="back-btn" style={{marginBottom: '15px'}}>← Назад до списку</button>
@@ -757,6 +765,7 @@ return (
               </form>
             </div>
 
+          //редагування книги
           ) : view === 'editBook' ? (
             <div className='login-box' style={{maxWidth: '500px'}}>
               <button onClick={() => setView('bookDetails')} className='back-btn' style={{marginBottom: '15px'}}>← Скасувати і повернутись</button>
@@ -770,6 +779,8 @@ return (
                 <button type='submit' style={{backgroundColor: '#f39c12'}}>Оновити дані</button>
               </form>
             </div>
+          
+          //кабінет
           ) : view === 'profile' ? (
             <div className='details-card' style={{maxWidth: '600px', margin: '0 auto', marginTop: '20px'}}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
@@ -833,6 +844,7 @@ return (
             </div>
           ) : (
             <>
+              {/*сам список книг*/}
               <div className='filter-panel'>
                 <form onSubmit={handleSearch} className='filter-form'>
                   <div style={{ position: 'relative', flex: '1', minWidth: '200px' }}>
