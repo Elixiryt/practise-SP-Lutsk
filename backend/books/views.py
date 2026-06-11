@@ -1,6 +1,9 @@
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.dispatch import receiver
+from django_rest_passwordreset.signals import reset_password_token_created
 import requests
 import openpyxl
 from rest_framework import filters, generics
@@ -143,3 +146,24 @@ def export_excel(request):
     
     wb.save(response)
     return response
+
+@receiver(reset_password_token_created)
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+    """
+    Функція, яка ловить сигнал про створення токена і відправляє його на пошту
+    """
+    # Формуємо текст листа
+    email_plaintext_message = f"Вітаємо!\n\nХтось (сподіваємось, ви) запросив скидання пароля для вашого акаунта.\n\nОсь ваш токен для відновлення:\n{reset_password_token.key}\n\nСкопіюйте його та вставте на сайті."
+
+    # Відправляємо лист
+    send_mail(
+        # Тема листа
+        subject="Відновлення пароля - Моя бібліотека",
+        # Текст листа
+        message=email_plaintext_message,
+        # Від кого (якщо None, Django бере DEFAULT_FROM_EMAIL з settings.py)
+        from_email=None,
+        # Кому відправляємо (беремо пошту юзера, для якого створився токен)
+        recipient_list=[reset_password_token.user.email],
+        fail_silently=False,
+    )

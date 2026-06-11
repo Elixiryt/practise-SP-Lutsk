@@ -98,6 +98,7 @@ function App() {
 
       setMessage('Токен відправлено')
       setView('reset')
+      setEmail('')
     } catch (err) {
       setError(err.message)
     }
@@ -108,13 +109,13 @@ function App() {
     setError(null);
     setMessage('');
     try {
-      const respponse = await fetch('http:/localhost:8000/api/password_reset/confirm/', {
+      const response = await fetch('http://localhost:8000/api/password_reset/confirm/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ token:resetToken, password:newPassword})
       });
 
-      if (!token) throw new Error('Недійсний пароль, або занадто простий пароль');
+      if (!response.ok) throw new Error('Недійсний пароль, або занадто простий пароль');
 
       setMessage('Зміна паролю пройшла успішно, тепер ви можете увійти')
       setView('login')
@@ -156,6 +157,8 @@ function App() {
       setMessage('Реєстрація успішна. Тепер ви можете увійти')
       setView('login')
       setPassword('')
+      setEmail('')
+      setConfirmPassword('')
     } catch(err) {
       setError(err.message)
     }
