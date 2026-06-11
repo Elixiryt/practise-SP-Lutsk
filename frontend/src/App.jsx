@@ -88,7 +88,7 @@ function App() {
     setError(null);
     setMessage('');
     try {
-      const response = await fetch('http://localhost:8000/password_reset/', {
+      const response = await fetch('http://localhost:8000/api/password_reset/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({email})
@@ -104,11 +104,11 @@ function App() {
   }
 
   const handleConfirmReset = async (e) => {
-    e.preventDefault;
+    e.preventDefault();
     setError(null);
     setMessage('');
     try {
-      const respponse = await('http:/localhost:8000/password_reset/confirm/', {
+      const respponse = await fetch('http:/localhost:8000/api/password_reset/confirm/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ token:resetToken, password:newPassword})
@@ -117,8 +117,9 @@ function App() {
       if (!token) throw new Error('Недійсний пароль, або занадто простий пароль');
 
       setMessage('Зміна паролю пройшла успішно, тепер ви можете увійти')
-      setView(login)
+      setView('login')
       setPassword('')
+      setNewPassword('')
     } catch(err) {
       setError(err.message)
     }
@@ -635,8 +636,6 @@ return (
         <div>
           {isAdmin && (
             <>
-              {/* 🔥 РОЗУМНИЙ ПАРСЕР (КНОПКА АБО ФОРМА) */}
-              {/* 🔥 РОЗУМНИЙ ПАРСЕР ЗІ СПАДНИМ МЕНЮ ЖАНРІВ */}
               {showScrapeMenu ? (
                 <form onSubmit={handleScrape} style={{display: 'inline-flex', gap: '5px', alignItems: 'center', marginRight: '10px'}}>
                   
@@ -675,26 +674,26 @@ return (
                   </div>
 
                   <input type="number" value={scrapeCount} onChange={e => setScrapeCount(e.target.value)} placeholder="К-сть" style={{padding: '7px', width: '60px', borderRadius: '4px', border: '1px solid #ccc'}} required min="1" max="50"/>
-                  <button type="submit" disabled={isScraping} className='logout-btn' style={{backgroundColor: '#8e44ad', margin: 0}}>
-                    {isScraping ? '⏳...' : 'Запуск'}
+                  <button type="submit" disabled={isScraping} className='logout-btn logout-btn--purple' style={{margin: 0}}>
+                    {isScraping ? 'Завантажується...' : 'Запуск'}
                   </button>
-                  <button type="button" onClick={() => setShowScrapeMenu(false)} className='logout-btn' style={{backgroundColor: '#95a5a6', margin: 0, padding: '8px 12px'}}>
-                    X
+                  <button type="button" onClick={() => setShowScrapeMenu(false)} className='logout-btn' style={{margin: 0, padding: '8px 12px'}}>
+                    ✕
                   </button>
                 </form>
               ) : (
-                <button onClick={() => setShowScrapeMenu(true)} className='logout-btn' style={{backgroundColor: '#8e44ad', marginRight: '10px'}}>
-                  🤖 Розумний парсер
+                <button onClick={() => setShowScrapeMenu(true)} className='logout-btn logout-btn--purple'>
+                  Розумний парсер
                 </button>
               )}
 
-              <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn' style={{backgroundColor: '#2ecc71', marginRight: '10px'}}>
+              <button onClick={() => {setView('addBook'); setError(null);}} className='logout-btn logout-btn--green'>
                 + Додати нову книгу
               </button>
             </>
           )}
           
-          <button onClick={() => setView('profile')} className='logout-btn' style={{backgroundColor: '#3498db', marginRight: '10px'}}>Мій профіль</button>
+          <button onClick={() => setView('profile')} className='logout-btn logout-btn--blue'>Мій профіль</button>
         </div>
       </div>
 
@@ -712,23 +711,20 @@ return (
                   <div>
                     <button 
                       onClick={() => {
-                        // Копіюємо дані книги у форму
                         setNewTitle(selectedBook.title);
                         setNewAuthor(selectedBook.author);
                         setNewGenre(selectedBook.genre);
                         setNewYear(selectedBook.publication_year);
-                        setView('editBook'); // Відкриваємо форму редагування
+                        setView('editBook');
                       }} 
-                      className="detail-btn" 
-                      style={{ backgroundColor: '#f39c12'}}
+                      className="detail-btn detail-btn--edit"
                     >
                       Редагувати
                     </button>
 
                     <button 
                       onClick={() => handleDeleteBook(selectedBook.id)} 
-                      className="detail-btn" 
-                      style={{ backgroundColor: '#e74c3c', top: '60px' }}
+                      className="detail-btn detail-btn--delete"
                     >
                       Видалити
                     </button>
@@ -744,7 +740,6 @@ return (
               </div>
             </div>
 
-          /* 2. ІНАКШЕ ЯКЩО РЕЖИМ ДОДАВАННЯ КНИГИ */
           ) : view === 'addBook' ? (
             <div className="login-box" style={{ maxWidth: '500px' }}>
               <button onClick={() => setView('books')} className="back-btn" style={{marginBottom: '15px'}}>← Назад до списку</button>
@@ -758,6 +753,7 @@ return (
                 <button type="submit">Зберегти книгу</button>
               </form>
             </div>
+
           ) : view === 'editBook' ? (
             <div className='login-box' style={{maxWidth: '500px'}}>
               <button onClick={() => setView('bookDetails')} className='back-btn' style={{marginBottom: '15px'}}>← Скасувати і повернутись</button>
@@ -771,7 +767,6 @@ return (
                 <button type='submit' style={{backgroundColor: '#f39c12'}}>Оновити дані</button>
               </form>
             </div>
-          /* 3. ІНАКШЕ (ЗА ЗАМОВЧУВАННЯМ) ПОКАЗУЄМО СПИСОК */
           ) : view === 'profile' ? (
             <div className='details-card' style={{maxWidth: '600px', margin: '0 auto', marginTop: '20px'}}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
@@ -779,7 +774,7 @@ return (
                     ← Назад до бібліотеки
                   </button>
                   
-                  <button onClick={handleLogout} className="logout-btn" style={{ backgroundColor: '#e74c3c', marginTop: 0 }}>
+                  <button onClick={handleLogout} className="logout-btn logout-btn--danger" style={{ marginTop: 0 }}>
                     Вийти з аккаунта
                   </button>
                 </div>
@@ -787,7 +782,7 @@ return (
 
                {userProfile ? (
                  <>
-                  <div style={{marginTop: '20px', fontSize: '18px', lineHeight: '1.6'}}>
+                  <div style={{marginTop: '20px', fontSize: '18px', lineHeight: '1.6', alignItems: 'center'}}>
                     <p><strong>Юзернейм:</strong> {userProfile.username}</p>
                     <p><strong>Email:</strong> {userProfile.email}</p>
                     <p>
@@ -800,14 +795,13 @@ return (
                     </p>
                   </div>
 
-                  {/* 🔥 ОСЬ СЮДИ ВСТАВЛЯЄМО ФОРМУ ЗМІНИ ПАРОЛЯ */}
-                  <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
+                  <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #eee', textAlign: 'center'}}>
                     <h3>Змінити пароль</h3>
                     
                     {profileMessage && <p className="success" style={{color: '#2ecc71'}}>{profileMessage}</p>}
                     {profileError && <p className="error" style={{color: '#e74c3c'}}>{profileError}</p>}
                     
-                    <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px', marginTop: '10px' }}>
+                    <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '300px', marginTop: '10px', alignItems: 'center'}}>
                       <input 
                         type="password" 
                         placeholder="Старий пароль" 
@@ -932,19 +926,25 @@ return (
                   )}
                 </form>
               </div>
-              <div className='books-grid'>
+              <div className='books-list'>
                 {books.map(book => (
-                  <div key={book.id} className='book-card'>
-                    <div className='book-info'>
-                      <h2>{book.title}</h2>
-                      <p><strong>Aвтор: </strong>{book.author}</p>
-                      <p><strong>Жанр: </strong>{book.genre}</p>
-                      <p className='year'><strong>Рік: </strong>{book.publication_year}</p>
+                  <div key={book.id} className='book-row'>
+                    <div className='book-row-info'>
+                      <span className='book-row-title'>{book.title}</span>
+                      <span className='book-row-meta'>
+                        <span>{book.author}</span>
+                        <span className='book-row-dot'>·</span>
+                        <span>{book.genre}</span>
+                        <span className='book-row-dot'>·</span>
+                        <span className='book-row-year'>{book.publication_year}</span>
+                      </span>
                     </div>
-                    <button onClick={() => handleViewDetails(book.id)} className='detail-btn'>Детальніше</button>
-                    {isAdmin && (
-                      <button onClick={() => handleDeleteBook(book.id)} className='detail-btn' style={{backgroundColor: '#e74c3c', top: '60px'}}>Видалити книгу</button>
-                    )}
+                    <div className='book-row-actions'>
+                      {isAdmin && (
+                        <button onClick={() => handleDeleteBook(book.id)} className='row-btn row-btn--danger'>Видалити</button>
+                      )}
+                      <button onClick={() => handleViewDetails(book.id)} className='row-btn'>Детальніше</button>
+                    </div>
                   </div>
                 ))}
               </div>
